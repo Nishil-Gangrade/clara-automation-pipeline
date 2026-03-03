@@ -1,0 +1,57 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7ca54bea-2ad4-43c2-a03b-9152baa9b0d2",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/run-pipeline",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "44cffce9-6958-47ea-89ea-11fdd61b4196",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c6b9cfbf-45be-47f5-a680-eae4ff20d7a1",
+  "meta": {
+    "instanceId": "5703233e47409105758bf75fe6187c16f550ae4ec8075dea9cd508bf59b36a10"
+  },
+  "id": "1fMQdpgQ7kTasgDW",
+  "tags": []
+}
