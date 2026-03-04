@@ -1,13 +1,9 @@
-// scripts/extractDemo.js
-
 const fs = require("fs");
 const path = require("path");
 const { createEmptyAccountMemo } = require("./schema");
 const { createAgentSpec } = require("./agentTemplate");
 
-// =============================
-// Utility Extraction Functions
-// =============================
+
 
 function extractCompanyName(text) {
   const match = text.match(/([A-Za-z\s]+Electrical\sSolutions)/i);
@@ -15,16 +11,12 @@ function extractCompanyName(text) {
 }
 
 function extractCRM(text) {
-  if (text.toLowerCase().includes("jobber")) {
-    return "Jobber";
-  }
+  if (text.toLowerCase().includes("jobber")) return "Jobber";
   return "";
 }
 
 function extractIndustry(text) {
-  if (text.toLowerCase().includes("electric")) {
-    return "Electrical Services";
-  }
+  if (text.toLowerCase().includes("electric")) return "Electrical Services";
   return "";
 }
 
@@ -71,10 +63,8 @@ function extractCallVolume(text) {
 }
 
 function extractScreeningPreference(text) {
-  if (text.toLowerCase().includes("screen")) {
-    return true;
-  }
-  return true; // default safe assumption (screen enabled)
+  if (text.toLowerCase().includes("screen")) return true;
+  return true;
 }
 
 function extractAfterHoursBehavior(text) {
@@ -91,7 +81,10 @@ function extractIntegrationConstraints(text) {
     constraints.push("Jobber integration desired");
   }
 
-  if (text.toLowerCase().includes("integration") && text.toLowerCase().includes("in progress")) {
+  if (
+    text.toLowerCase().includes("integration") &&
+    text.toLowerCase().includes("in progress")
+  ) {
     constraints.push("CRM integration currently in progress");
   }
 
@@ -124,101 +117,121 @@ function detectUnknowns(accountMemo) {
   return unknowns;
 }
 
-// =============================
-// MAIN PROCESS FUNCTION
-// =============================
+
 
 function processDemoTranscript(filePath) {
-  const rawText = fs.readFileSync(filePath, "utf-8");
-  const accountId = path.basename(filePath, ".txt").replace("_demo", "");
 
-  const accountMemo = createEmptyAccountMemo(accountId);
+  try {
 
-  // --- Core Extractions ---
-  accountMemo.company_name = extractCompanyName(rawText);
-  accountMemo.crm_system = extractCRM(rawText);
-  accountMemo.industry = extractIndustry(rawText);
-  accountMemo.services_supported = extractServices(rawText);
+    if (!fs.existsSync(filePath)) {
+      console.error(`File not found: ${filePath}`);
+      return;
+    }
 
-  accountMemo.emergency_definition = extractEmergencyInfo(rawText, accountMemo);
+    const rawText = fs.readFileSync(filePath, "utf-8");
+    const accountId = path.basename(filePath, ".txt").replace("_demo", "");
 
-  // --- Behavioral Summaries ---
-  accountMemo.after_hours_flow_summary = extractAfterHoursBehavior(rawText);
+    const accountMemo = createEmptyAccountMemo(accountId);
 
-  accountMemo.office_hours_flow_summary =
-    "Calls screened during office hours; relevant service requests qualified before scheduling.";
+    // --- Core Extractions ---
+    accountMemo.company_name = extractCompanyName(rawText);
+    accountMemo.crm_system = extractCRM(rawText);
+    accountMemo.industry = extractIndustry(rawText);
+    accountMemo.services_supported = extractServices(rawText);
+    accountMemo.emergency_definition = extractEmergencyInfo(rawText, accountMemo);
 
-  accountMemo.non_emergency_routing_rules.screen_calls =
-    extractScreeningPreference(rawText);
+    // --- Behavioral Summaries ---
+    accountMemo.after_hours_flow_summary = extractAfterHoursBehavior(rawText);
 
-  accountMemo.integration_constraints = extractIntegrationConstraints(rawText);
+    accountMemo.office_hours_flow_summary =
+      "Calls screened during office hours; relevant service requests qualified before scheduling.";
 
-  accountMemo.notes =
-    `Generated from demo call transcript only. Approx weekly call volume: ${extractCallVolume(rawText)}.`;
+    accountMemo.non_emergency_routing_rules.screen_calls =
+      extractScreeningPreference(rawText);
 
-  // --- Unknowns Detection ---
-  accountMemo.questions_or_unknowns = detectUnknowns(accountMemo);
+    accountMemo.integration_constraints = extractIntegrationConstraints(rawText);
 
-  // =============================
-  // Save v1 Outputs
-  // =============================
+    accountMemo.notes =
+      `Generated from demo call transcript only. Approx weekly call volume: ${extractCallVolume(rawText)}.`;
 
-  const accountDir = path.join(
-    __dirname,
-    "..",
-    "outputs",
-    "accounts",
-    accountId,
-    "v1"
-  );
+    accountMemo.questions_or_unknowns = detectUnknowns(accountMemo);
 
-  fs.mkdirSync(accountDir, { recursive: true });
+    // =============================
+    // Save v1 Outputs
+    // =============================
 
-  fs.writeFileSync(
-    path.join(accountDir, "account_memo.json"),
-    JSON.stringify(accountMemo, null, 2)
-  );
+    const accountDir = path.join(
+      __dirname,
+      "..",
+      "outputs",
+      "accounts",
+      accountId,
+      "v1"
+    );
 
-  const agentSpec = createAgentSpec(accountMemo, "v1");
+    fs.mkdirSync(accountDir, { recursive: true });
 
-  fs.writeFileSync(
-    path.join(accountDir, "agent_spec.json"),
-    JSON.stringify(agentSpec, null, 2)
-  );
-  // -------- CREATE TASK TRACKING ITEM --------
-const taskDir = path.join(__dirname, "..", "tasks");
-fs.mkdirSync(taskDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(accountDir, "account_memo.json"),
+      JSON.stringify(accountMemo, null, 2)
+    );
 
-const task = {
-  account_id: accountId,
-  stage: "Demo Complete",
-  status: "Awaiting Onboarding",
-  created_at: new Date().toISOString(),
-  version: "v1"
-};
+    const agentSpec = createAgentSpec(accountMemo, "v1");
 
-fs.writeFileSync(
-  path.join(taskDir, `${accountId}_task.json`),
-  JSON.stringify(task, null, 2)
-);
+    fs.writeFileSync(
+      path.join(accountDir, "agent_spec.json"),
+      JSON.stringify(agentSpec, null, 2)
+    );
 
-  console.log(`✅ v1 generated for ${accountId}`);
+    // -------- CREATE TASK TRACKING ITEM --------
+
+    const taskDir = path.join(__dirname, "..", "tasks");
+    fs.mkdirSync(taskDir, { recursive: true });
+
+    const task = {
+      account_id: accountId,
+      stage: "Demo Complete",
+      status: "Awaiting Onboarding",
+      created_at: new Date().toISOString(),
+      version: "v1"
+    };
+
+    fs.writeFileSync(
+      path.join(taskDir, `${accountId}_task.json`),
+      JSON.stringify(task, null, 2)
+    );
+
+    console.log(` v1 generated for ${accountId}`);
+
+  } catch (error) {
+
+    console.error(" Demo pipeline error:");
+    console.error(error.message);
+
+  }
 }
 
 // =============================
-// CLI Execution (Batch Mode)
+// CLI Execution
 // =============================
 
 if (require.main === module) {
   const demoFolder = path.join(__dirname, "..", "data", "demo_calls");
 
-  const files = fs.readdirSync(demoFolder);
+  try {
 
-  files.forEach(file => {
-    if (file.endsWith(".txt")) {
-      processDemoTranscript(path.join(demoFolder, file));
-    }
-  });
+    const files = fs.readdirSync(demoFolder);
+
+    files.forEach(file => {
+      if (file.endsWith(".txt")) {
+        processDemoTranscript(path.join(demoFolder, file));
+      }
+    });
+
+  } catch (error) {
+    console.error("Failed reading demo folder");
+    console.error(error.message);
+  }
 }
 
 module.exports = { processDemoTranscript };

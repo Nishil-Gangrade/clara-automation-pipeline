@@ -19,7 +19,7 @@ let summary = {
   onboardingUpdated: 0
 };
 
-console.log("🚀 Starting Clara Automation Pipeline...\n");
+console.log("Starting Clara Automation Pipeline...\n");
 
 // -------- PROCESS DEMO CALLS --------
 fs.readdirSync(demoFolder).forEach(file => {
@@ -44,8 +44,8 @@ fs.readdirSync(onboardingFolder).forEach(file => {
   }
 });
 
-console.log("\n📊 Pipeline Summary:");
+console.log("\n Pipeline Summary:");
 console.log(`Demo files processed: ${summary.demoProcessed}`);
 console.log(`Onboarding files processed: ${summary.onboardingProcessed}`);
 console.log(`Accounts updated: ${summary.onboardingUpdated}`);
-console.log("\n✅ Pipeline execution complete.");
+console.log("\n Pipeline execution complete.");
